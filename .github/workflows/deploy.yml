@@ -47,16 +47,16 @@ jobs:
             ${{ runner.os }}-pnpm-store-
       - name: Find and Replace in index.html
         run: |
-          cp ./index.html ./index.html.backup
+          cp ./frontend/edward-profolio/index.html ./frontend/edward-profolio/index.html.backup
           
           sed -i 's/YOUR-CLIENT-ID/${{ secrets.VITE_ADSENSE_CLIENT_ID }}/g' ./index.html
           
           # Optional: Display diff to verify changes (remove in production)
           echo "Changes made:"
-          diff ./index.html.backup ./index.html || true
+          diff ./frontend/edward-profolio/.html.backup ./frontend/edward-profolio/.html || true
           
           # Remove backup
-          rm ./index.html.backup
+          rm ./frontend/edward-profolio/.html.backup
       - name: Install dependencies
         run: pnpm install
 
