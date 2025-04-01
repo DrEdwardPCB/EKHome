@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+      "target": "ES2020",
+      "useDefineForClassFields": true,
+      "lib": ["ES2020", "DOM","DOM.Iterable"],
+      "module": "NodeNext",
+      "skipLibCheck": true,
+      "allowJs": true,
+      "removeComments": true,
+      "esModuleInterop": true,
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
+      "moduleResolution": "NodeNext",
+      "resolveJsonModule": true,
+      "isolatedModules": true,
+      "noEmit": false,
+      "jsx": "react-jsx",
+      "strict": false,
+      "noUnusedLocals": false,
+      "noUnusedParameters": false,
+      "noFallthroughCasesInSwitch": false,
+      "noImplicitAny": false,
+      "resolvePackageJsonImports": true,
+      "outDir": "dist",
+    },
+  }
+  

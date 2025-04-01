@@ -1,0 +1,7 @@
+packages:
+  - backend/*
+  - frontend/edward-profolio
+  - frontend/kiki-profolio
+  - frontend/ekhubs
+  - frontend/tools/*
+  - libs/*

@@ -1,0 +1,4 @@
+#tsparticles{
+	height: calc(100vh-4rem);
+}
+html { scroll-behavior: smooth; } 

@@ -1,0 +1,8 @@
+**/node_modules
+**/logs
+**/dist
+**/temp
+**/.env
+**/bin
+.nx
+.vscode

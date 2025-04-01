@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+message None {}
+
+message CreatePermissionResult {
+	string status=1;
+}
+message CreatePermissionRequest{
+	string PermissionName =1;
+	string PermissionDesc=2;
+}
+message GetUserRequest{
+	string token = 1;
+}
+message GetUserResponse{
+	string id=1;
+	string name=2;
+	string email=3;
+	bool enabled=4;
+}
+message GetProfileResponse{
+	
+}
+
+enum logicEnum{
+	AND =1;
+	OR = 2;
+}
+message AuthRequest{
+	string token = 1;
+	repeated string permission=2;
+	logicEnum mode=3;
+}
+message AuthResponse{
+	bool ok=1;
+}
+
+service AuthMSService{
+	rpc CreatePermission(None) returns (CreatePermissionResult) {}
+	rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
+	rpc GetProfile(GetUserRequest) returns (GetProfileResponse) {}
+	rpc Auth(AuthRequest) returns (AuthResponse) {}
+}

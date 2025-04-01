@@ -1,0 +1,20 @@
+{
+	"name": "ekhome",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"build-edward": "nx run @ekhome/edward-profolio:build",
+		"build": "nx run-many -t build --all",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devDependencies": {
+		"nx": "20.7.0"
+	},
+	"dependencies": {
+		"typescript": "^5.0.2"
+	}
+}

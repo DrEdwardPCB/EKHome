@@ -1,0 +1,154 @@
+version: '3'
+name: ekhome
+services:
+  # # React App
+  # app-1:
+  #   extends:
+  #     file: docker-compose.base.yml
+  #     service: nx-app-base
+  #   command: npm run app-1:dev:docker
+  #   ports:
+  #     - 4201:4200
+
+  # # React App
+  # app-2:
+  #   extends:
+  #     file: docker-compose.base.yml
+  #     service: nx-app-base
+  #   command: npm run app-2:dev:docker
+  #   ports:
+  #     - 4202:4200
+
+  # # Angular App
+  # app-3:
+  #   extends:
+  #     file: docker-compose.base.yml
+  #     service: nx-app-base
+  #   command: npm run app-3:dev:docker
+  #   ports:
+  #     - 4203:4200
+
+  # # Express App
+  # api-1:
+  #   extends:
+  #     file: docker-compose.base.yml
+  #     service: nx-app-base
+  #   command: npm run api-1:dev:docker
+  #   ports:
+  #     - 4310:3333 # API Entry port
+  #     - 4311:4311 # Server Debugging port
+  reverse-proxy:
+    # The official v2 Traefik docker image
+    image: traefik:v2.10
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --api.dashboard=true --providers.docker --entryPoints.web.address=:80 --entryPoints.web.address=:80 --entryPoints.mongo.address=:27017 --entryPoints.postgres.address=:5432 --entryPoints.redis.address=:6379 --entryPoints.ampqs.address=:5672
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+      - "443:443"
+      # tcp port for various services
+      - "6379:6379" # redis
+      - "27017:27017" # mongo
+      - "5432:5432" # postgres
+      - "5672:5672" # rabbit mq
+    labels:
+      traefik.enable: true
+      traefik.http.routers.traefik.rule: "Host(`local.ekhome.life`)"
+      traefik.http.routers.traefik.service: "api@internal"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+  whoami:
+    # A container that exposes an API to show its IP address
+    image: traefik/whoami
+    labels:
+      - "traefik.http.routers.whoami.rule=Host(`whoami.ekhome.life`)"
+  mongo:
+    image: mongo:5.0.6
+    restart: unless-stopped
+    volumes:
+      - ./data/mongo:/data/db
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.tcp.routers.mongo.rule=HostSNI(`*`)'
+      - 'traefik.tcp.routers.mongo.entrypoints=mongo'
+      - 'traefik.tcp.routers.mongo.tls=false'
+      - 'traefik.tcp.services.mongo.loadbalancer.server.port=27017'
+  postgres:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    labels:
+      - "traefik.enable=true"
+      # routers
+      - "traefik.tcp.routers.postgres.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.postgres.entryPoints=postgres"
+      - "traefik.tcp.routers.postgres.service=postgres"
+      - 'traefik.tcp.routers.postgres.tls=false'
+      # services (needed for TCP)
+      - "traefik.tcp.services.postgres.loadbalancer.server.port=5432"
+
+  redis:
+    image: bitnami/redis:latest
+    restart: unless-stopped
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+    volumes:
+      - ./data/redis:/bitnami/redis/data
+    labels:
+      - "traefik.enable=true"
+      # routers
+      - "traefik.tcp.routers.redis.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.redis.entryPoints=redis"
+      - "traefik.tcp.routers.redis.service=redis"
+      - 'traefik.tcp.routers.redis.tls=false'
+      # services (needed for TCP)
+      - "traefik.tcp.services.redis.loadbalancer.server.port=6379"
+  seq:
+    image: datalust/seq:latest
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      SEQ_DIAGNOSTICS_INTERNALLOGGINGLEVEL: "Debug"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.seq.rule=Host(`local.ekhome.life`) && PathPrefix(`/seq/`)"
+      - "traefik.http.middlewares.autodetect.contenttype.autodetect=false"
+      - "traefik.http.middlewares.strip-seq.stripprefix.prefixes=/seq"
+      - "traefik.http.routers.seq.entrypoints=web"
+      - "traefik.http.routers.seq.middlewares=strip-seq,autodetect"
+      - "traefik.http.services.seq.loadbalancer.server.port=80"
+    volumes:
+      - ./data/seq:/data
+    ports:
+      - "5341:5341"
+      - "8084:80"
+  rabbitmq:
+    image: rabbitmq:management
+    environment:
+      FLOWER_BROKER_API_URL: http://guest:guest@broker:15672/api
+    labels:
+      - traefik.enable=true
+      - "traefik.http.routers.rabbitmq.rule=Host(`rabbitmq.ekhome.life`)"
+      - "traefik.http.routers.rabbitmq.entrypoints=web"
+      - "traefik.http.routers.rabbitmq.service=rabbitmq"
+      - "traefik.http.services.rabbitmq.loadbalancer.server.port=15672"
+      - traefik.tcp.routers.rabbitmq-ampqs.rule=HostSNI(`*`)
+      - traefik.tcp.routers.rabbitmq-ampqs.entrypoints=ampqs
+      - traefik.tcp.routers.rabbitmq-ampqs.tls=false
+      # - traefik.tcp.routers.rabbitmq-ampqs.tls=true
+      # - traefik.tcp.routers.rabbitmq-ampqs.tls.certresolver=le
+      # - traefik.tcp.routers.rabbitmq-tcp.tls.passthrough=true
+      - traefik.tcp.routers.rabbitmq-ampqs.service=service-rabbitmq-ampqs
+      - traefik.tcp.services.service-rabbitmq-ampqs.loadbalancer.server.port=5672
+volumes:
+  mono-node-modules: null

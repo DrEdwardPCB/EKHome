@@ -1,0 +1,25 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../../node_modules/@prisma/prisma-mongo/client"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("MONGO_URL")
+}
+
+model EkhomeAuthConfig {
+    id            String   @id @default(auto()) @map("_id") @db.ObjectId
+    created_at    DateTime @default(now())
+    updated_at    DateTime @updatedAt()
+    smtp_server   String   @default("smtp.gmail.com")
+    smtp_name     String
+    smtp_username String
+    smtp_password String
+    smtp_port     Int      @default(587)
+    rest_port     Int      @default(4000)
+    grpc_port     Int      @default(14000)
+    seq_url       String
+    seq_key       String
+    jwt_secret    String
+}

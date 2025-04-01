@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+    output   = "../../node_modules/@prisma/prisma-postgres/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("POSTGRES_URL")
+}
+
+model User {
+    id                     String                   @id @default(uuid())
+    email                  String                   @unique
+    password               String
+    enabled                Boolean                  @default(false)
+    name                   String?
+    profile                Profile?
+    GroupUserRelation      GroupUserRelation[]
+    RoleUserRelation       RoleUserRelation[]
+    PermissionUserRelation PermissionUserRelation[]
+}
+
+model Profile {
+    id             String   @id @default(uuid())
+    birthDate      DateTime
+    profilePicture String
+    description    String?
+    bio            String?
+    user           User     @relation(fields: [userId], references: [id])
+    userId         String   @unique
+}
+
+model Group {
+    id                String              @id @default(uuid())
+    name              String
+    description       String?
+    createdAt         DateTime            @default(now())
+    createdBy         String
+    GroupUserRelation GroupUserRelation[]
+    GroupRoleRelation GroupRoleRelation[]
+}
+
+model Role {
+    id                String                   @id @default(uuid())
+    name              String
+    description       String?
+    createdAt         DateTime                 @default(now())
+    createdBy         String
+    RoleUserRelation  RoleUserRelation[]
+    RoleGroupRelation RolePermissionRelation[]
+    GroupRoleRelation GroupRoleRelation[]
+}
+
+model Permission {
+    id                     String                   @id @default(uuid())
+    name                   String
+    description            String?
+    createdAt              DateTime                 @default(now())
+    createdBy              String                   @default("application")
+    PermissionUserRelation PermissionUserRelation[]
+    RolePermissionRelation RolePermissionRelation[]
+}
+
+model GroupUserRelation {
+    groupId    String
+    group      Group    @relation(fields: [groupId], references: [id])
+    userId     String
+    user       User     @relation(fields: [userId], references: [id])
+    assignedAt DateTime @default(now())
+    assignedBy String
+
+    @@id([groupId, userId])
+}
+
+model RoleUserRelation {
+    roleId     String
+    role       Role     @relation(fields: [roleId], references: [id])
+    userId     String
+    user       User     @relation(fields: [userId], references: [id])
+    assignedAt DateTime @default(now())
+    assignedBy String
+
+    @@id([roleId, userId])
+}
+
+model PermissionUserRelation {
+    permissionId String
+    permission   Permission @relation(fields: [permissionId], references: [id])
+    userId       String
+    user         User       @relation(fields: [userId], references: [id])
+    assignedAt   DateTime   @default(now())
+    assignedBy   String
+
+    @@id([permissionId, userId])
+}
+
+model GroupRoleRelation {
+    groupId    String
+    group      Group    @relation(fields: [groupId], references: [id])
+    roleId     String
+    role       Role     @relation(fields: [roleId], references: [id])
+    assignedAt DateTime @default(now())
+    assignedBy String
+
+    @@id([groupId, roleId])
+}
+
+model RolePermissionRelation {
+    permissionId String
+    permission   Permission @relation(fields: [permissionId], references: [id])
+    roleId       String
+    role         Role       @relation(fields: [roleId], references: [id])
+    assignedAt   DateTime   @default(now())
+    assignedBy   String
+
+    @@id([permissionId, roleId])
+}
